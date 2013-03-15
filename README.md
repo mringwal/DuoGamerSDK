@@ -1,11 +1,11 @@
-Duo Gamer SDK
-=================
+Duo Gamer SDK for iOS
+=====================
 
-Mimimal SDK to use the Duo Gamer Bluetooth controller
+Mimimal SDK to use the Duo Gamer Bluetooth controller on iOS
 
 ## Quick test
-* compile and install the DuoGamerTest command line tool
-* start it and connect the Duo Gamer
+* Compile and install the DuoGamerTest command line tool
+* Start it and connect the Duo Gamer
 * After connection, it will print the controller state to the console
 
 ## Use in your UIKit app
