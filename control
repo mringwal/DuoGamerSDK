@@ -1,0 +1,10 @@
+Package: ch.ringwald.duogamer
+Name: DuoGamerTest
+Depends: MobileSubstrate
+Version: 0.0.1
+Architecture: iphoneos-arm
+Description: DuoGamer SDK
+Maintainer: Matthias Ringwald
+Author: Matthias Ringwald
+Section: System
+Tag: role::hacker
