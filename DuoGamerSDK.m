@@ -1,3 +1,7 @@
+//
+// 
+//
+
 /*
  * Copyright (C) 2013 by Matthias Ringwald
  *
@@ -28,10 +32,6 @@
  * SUCH DAMAGE.
  *
  */
-
-//
-// DuoGamerSDK 
-//
 
 #import "DuoGamerSDK.h"
 
@@ -166,22 +166,24 @@ static inline BOOL isBitSet(int data, int bit){
     if (data[9] != 0x00) return;
 
     DuoGamerState state;
-    uint8_t rightPad = data[3];
-    uint8_t leftPad  = data[4];
-    state.buttonA       = isBitSet(rightPad, 0);
-    state.buttonB       = isBitSet(rightPad, 1);
-    state.buttonX       = isBitSet(rightPad, 2);
-    state.buttonY       = isBitSet(rightPad, 3);
-    state.shoulderRight = isBitSet(leftPad,  0);
-    state.shoulderLeft  = isBitSet(leftPad,  1);
-    state.dpadUp        = isBitSet(leftPad,  2);
-    state.dpadRight     = isBitSet(leftPad,  3);
-    state.dpadDown      = isBitSet(leftPad,  4);
-    state.dpadLeft      = isBitSet(leftPad,  5);
-    state.analogLeftX   = data[5] - 0x80;
-    state.analogLeftY   = data[6] - 0x80;
-    state.analogRightX  = data[7] - 0x80;
-    state.analogRightY  = data[8] - 0x80;
+    uint8_t buttons_1      = data[3];
+    uint8_t buttons_2      = data[4];
+    state.buttonA          = isBitSet(buttons_1, 0);
+    state.buttonB          = isBitSet(buttons_1, 1);
+    state.buttonY          = isBitSet(buttons_1, 2);
+    state.buttonX          = isBitSet(buttons_1, 3);
+    state.analogLeftClick  = isBitSet(buttons_1, 5);
+    state.analogRightClick = isBitSet(buttons_1, 6);
+    state.shoulderRight    = isBitSet(buttons_2,  0);
+    state.shoulderLeft     = isBitSet(buttons_2,  1);
+    state.dpadUp           = isBitSet(buttons_2,  2);
+    state.dpadRight        = isBitSet(buttons_2,  3);
+    state.dpadDown         = isBitSet(buttons_2,  4);
+    state.dpadLeft         = isBitSet(buttons_2,  5);
+    state.analogLeftX      = data[5] - 0x80;
+    state.analogLeftY      = data[6] - 0x80;
+    state.analogRightX     = data[7] - 0x80;
+    state.analogRightY     = data[8] - 0x80;
 
     if (![delegate respondsToSelector:@selector(handleState:)]) return;
     [delegate handleState:&state];
@@ -202,10 +204,9 @@ static inline BOOL isBitSet(int data, int bit){
 
     if ([readData length] == 11){
         [self processPacket];        
+        // NSLog(@"Read data (%u): %@", [readData length],
+        //   [NSString stringForData:(const uint8_t*)[readData bytes] withSize:[readData length]] );
     }  
-
-    // NSLog(@"Read data (%u): %@", [readData length],
-    //     [NSString stringForData:(const uint8_t*)[readData bytes] withSize:[readData length]] );
 
     // reset buffer - assumption: controller packet arrives in a single RFCOMM packet
     [readData setLength:0];

@@ -33,22 +33,29 @@
  *
  */
 
+
 #pragma once
 #import <ExternalAccessory/ExternalAccessory.h>
 
 typedef struct DuoGamerState {
     int8_t analogLeftX;
     int8_t analogLeftY;
+    BOOL   analogLeftClick;
+
     int8_t analogRightX;
     int8_t analogRightY;
+    BOOL   analogRightClick;
+
     BOOL dpadLeft;
     BOOL dpadRight;
     BOOL dpadUp;
     BOOL dpadDown;
+
     BOOL buttonA;
     BOOL buttonB;
     BOOL buttonX;
     BOOL buttonY;
+
     BOOL shoulderLeft;
     BOOL shoulderRight;
 } DuoGamerState;
