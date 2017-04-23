@@ -1,5 +1,5 @@
 //
-// DuoGamerSDK 
+// DuoGamerSDK
 //
 
 /*
@@ -33,18 +33,17 @@
  *
  */
 
-
 #pragma once
 #import <ExternalAccessory/ExternalAccessory.h>
 
 typedef struct DuoGamerState {
     int8_t analogLeftX;
     int8_t analogLeftY;
-    BOOL   analogLeftClick;
+    BOOL analogLeftClick;
 
     int8_t analogRightX;
     int8_t analogRightY;
-    BOOL   analogRightClick;
+    BOOL analogRightClick;
 
     BOOL dpadLeft;
     BOOL dpadRight;
@@ -61,20 +60,20 @@ typedef struct DuoGamerState {
 } DuoGamerState;
 
 @protocol DuoGamerDelegate
--(void) connected;
--(void) handleState:(DuoGamerState*)state;
--(void) disconnected;
+- (void)connected;
+- (void)handleState:(DuoGamerState *)state;
+- (void)disconnected;
 @end
 
-@interface DuoGamer : NSObject <EAAccessoryDelegate, NSStreamDelegate>{
-    EAAccessory * accessory;
-    EASession * session;
-    NSMutableData * readData;
+@interface DuoGamer : NSObject <EAAccessoryDelegate, NSStreamDelegate> {
+    EAAccessory *accessory;
+    EASession *session;
+    NSMutableData *readData;
     NSObject<DuoGamerDelegate> *delegate;
 }
 
-@property (nonatomic, retain) EAAccessory * accessory;
-@property (nonatomic, retain) EASession * session;
+@property (nonatomic, retain) EAAccessory *accessory;
+@property (nonatomic, retain) EASession *session;
 @property (nonatomic, assign) NSObject<DuoGamerDelegate> *delegate;
 
 @end

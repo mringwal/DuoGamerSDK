@@ -1,5 +1,5 @@
 //
-// 
+//
 //
 
 /*
@@ -35,49 +35,54 @@
 
 #import "DuoGamerSDK.h"
 
-NSString * duoGamerProtocolString = @"com.discoverybaygames.v2";
-NSString * duoGamerName = @"Duo Gamer";
+NSString *duoGamerProtocolString = @"com.discoverybaygames.v2";
+NSString *duoGamerName = @"Duo Gamer";
+
+#define SINGLE_PACKET_SIZE 11
 
 @interface NSString (BTstack)
-+(NSString*) stringForData:(const uint8_t*) data withSize:(uint16_t) size;
++ (NSString *)stringForData:(const uint8_t *)data withSize:(uint16_t)size;
 @end
 
-
 @interface DuoGamer (private)
--(void) openSession:(EAAccessory *) accessor;
+- (void)openSession:(EAAccessory *)accessor;
 - (void)closeSession;
 @end
 
-static inline BOOL isBitSet(int data, int bit){
-    if (data & (1<<bit)) return 1;
+static inline BOOL isBitSet(int data, int bit)
+{
+    if (data & (1 << bit))
+        return 1;
     return 0;
 }
 
 @implementation NSString (BTstatck)
-+(NSString*) stringForData:(const uint8_t*) data withSize:(uint16_t) size{
++ (NSString *)stringForData:(const uint8_t *)data withSize:(uint16_t)size
+{
     NSMutableString *output = [NSMutableString stringWithCapacity:size * 3];
-    for(int i = 0; i < size; i++){
-        [output appendFormat:@"%02x ",data[i]];
+    for (int i = 0; i < size; i++) {
+        [output appendFormat:@"%02x ", data[i]];
     }
     return output;
 }
 @end
-
 
 @implementation DuoGamer
 @synthesize accessory;
 @synthesize session;
 @synthesize delegate;
 
--(id) init {
+- (id)init
+{
     self = [super init];
 
     readData = [[NSMutableData alloc] init];
 
     // try to find already connected accessory
-    NSArray * accessories = [[EAAccessoryManager sharedAccessoryManager] connectedAccessories];
-    for (EAAccessory * connectedAccessory in accessories){
-        if (![connectedAccessory.name hasPrefix:duoGamerName]) continue;
+    NSArray *accessories = [[EAAccessoryManager sharedAccessoryManager] connectedAccessories];
+    for (EAAccessory *connectedAccessory in accessories) {
+        if (![connectedAccessory.name hasPrefix:duoGamerName])
+            continue;
         [self openSession:connectedAccessory];
     }
 
@@ -89,7 +94,8 @@ static inline BOOL isBitSet(int data, int bit){
     return self;
 }
 
--(void) dealloc {
+- (void)dealloc
+{
     self.delegate = nil;
     [self closeSession];
 
@@ -101,9 +107,9 @@ static inline BOOL isBitSet(int data, int bit){
     [super dealloc];
 }
 
--(void) openSession:(EAAccessory *) connectedAccessory{
-
-    if (accessory){
+- (void)openSession:(EAAccessory *)connectedAccessory
+{
+    if (accessory) {
         NSLog(@"DuoGamer: already connected");
     }
 
@@ -122,7 +128,11 @@ static inline BOOL isBitSet(int data, int bit){
     [[session inputStream] scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
     [[session inputStream] open];
 
-    if ([delegate respondsToSelector:@selector(connected)]){
+    [[session outputStream] setDelegate:self];
+    [[session outputStream] scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    [[session outputStream] open];
+
+    if ([delegate respondsToSelector:@selector(connected)]) {
         [delegate connected];
     }
 }
@@ -134,79 +144,98 @@ static inline BOOL isBitSet(int data, int bit){
     [[session inputStream] removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
     [[session inputStream] setDelegate:nil];
 
+    [[session outputStream] close];
+    [[session outputStream] removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    [[session outputStream] setDelegate:nil];
+
     [session release];
     session = nil;
 
     [readData release];
     readData = nil;
 
-    if ([delegate respondsToSelector:@selector(disconnected)]){
+    if ([delegate respondsToSelector:@selector(disconnected)]) {
         [delegate disconnected];
     }
 }
 
-- (void)_accessoryDidConnect:(NSNotification *)notification {
+- (void)_accessoryDidConnect:(NSNotification *)notification
+{
     EAAccessory *connectedAccessory = [[notification userInfo] objectForKey:EAAccessoryKey];
     [self openSession:connectedAccessory];
 }
 
-- (void)_accessoryDidDisconnect:(NSNotification *)notification {
+- (void)_accessoryDidDisconnect:(NSNotification *)notification
+{
     EAAccessory *disconnectedAccessory = [[notification userInfo] objectForKey:EAAccessoryKey];
-    if (accessory.connectionID != disconnectedAccessory.connectionID) return;
+    if (accessory.connectionID != disconnectedAccessory.connectionID)
+        return;
     self.accessory = nil;
 }
 
--(void)processPacket{
+- (void)processPacket
+{
+    uint8_t *data = malloc(sizeof(uint8_t));
 
-    // valid fixed data, but ignore xor checksum
-    uint8_t * data = (uint8_t*) [readData bytes];
-    if (data[0] != 0x5a) return;
-    if (data[1] != 0xa5) return;
-    if (data[2] != 0x04) return;
-    if (data[9] != 0x00) return;
+    // moving analog joystick may send more packets than usual
+    while ([readData length] >= SINGLE_PACKET_SIZE) {
+        // valid fixed data, but ignore xor checksum
+        [readData getBytes:(void *)data range:NSMakeRange(0, SINGLE_PACKET_SIZE)];
+        if (data[0] != 0x5a)
+            return;
+        if (data[1] != 0xa5)
+            return;
+        if (data[2] != 0x04)
+            return;
+        if (data[9] != 0x00)
+            return;
 
-    DuoGamerState state;
-    uint8_t buttons_1      = data[3];
-    uint8_t buttons_2      = data[4];
-    state.buttonA          = isBitSet(buttons_1, 0);
-    state.buttonB          = isBitSet(buttons_1, 1);
-    state.buttonY          = isBitSet(buttons_1, 2);
-    state.buttonX          = isBitSet(buttons_1, 3);
-    state.analogLeftClick  = isBitSet(buttons_1, 5);
-    state.analogRightClick = isBitSet(buttons_1, 6);
-    state.shoulderRight    = isBitSet(buttons_2,  0);
-    state.shoulderLeft     = isBitSet(buttons_2,  1);
-    state.dpadUp           = isBitSet(buttons_2,  2);
-    state.dpadRight        = isBitSet(buttons_2,  3);
-    state.dpadDown         = isBitSet(buttons_2,  4);
-    state.dpadLeft         = isBitSet(buttons_2,  5);
-    state.analogLeftX      = data[5] - 0x80;
-    state.analogLeftY      = data[6] - 0x80;
-    state.analogRightX     = data[7] - 0x80;
-    state.analogRightY     = data[8] - 0x80;
+        DuoGamerState state;
+        uint8_t buttons_1 = data[3];
+        uint8_t buttons_2 = data[4];
+        state.buttonA = isBitSet(buttons_1, 0);
+        state.buttonB = isBitSet(buttons_1, 1);
+        state.buttonX = isBitSet(buttons_1, 2);
+        state.buttonY = isBitSet(buttons_1, 3);
+        state.analogLeftClick = isBitSet(buttons_1, 5);
+        state.analogRightClick = isBitSet(buttons_1, 6);
+        state.shoulderRight = isBitSet(buttons_2, 0);
+        state.shoulderLeft = isBitSet(buttons_2, 1);
+        state.dpadUp = isBitSet(buttons_2, 2);
+        state.dpadRight = isBitSet(buttons_2, 3);
+        state.dpadDown = isBitSet(buttons_2, 4);
+        state.dpadLeft = isBitSet(buttons_2, 5);
+        state.analogLeftX = data[5] - 0x80;
+        state.analogLeftY = data[6] - 0x80;
+        state.analogRightX = data[7] - 0x80;
+        state.analogRightY = data[8] - 0x80;
 
-    if (![delegate respondsToSelector:@selector(handleState:)]) return;
-    [delegate handleState:&state];
+        if (![delegate respondsToSelector:@selector(handleState:)])
+            return;
+        [delegate handleState:&state];
+
+        [readData replaceBytesInRange:NSMakeRange(0, SINGLE_PACKET_SIZE) withBytes:NULL length:0];
+    }
+
+    free(data);
 }
 
 // asynchronous NSStream handleEvent method
 - (void)stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode
 {
-    if (eventCode != NSStreamEventHasBytesAvailable) return;
+    if (eventCode != NSStreamEventHasBytesAvailable)
+        return;
 
-    #define EAD_INPUT_BUFFER_SIZE 128
+#define EAD_INPUT_BUFFER_SIZE 128
     uint8_t buf[EAD_INPUT_BUFFER_SIZE];
-    while ([[session inputStream] hasBytesAvailable])
-    {
+    while ([[session inputStream] hasBytesAvailable]) {
         NSInteger bytesRead = [[session inputStream] read:buf maxLength:EAD_INPUT_BUFFER_SIZE];
         [readData appendBytes:(void *)buf length:bytesRead];
     }
 
-    if ([readData length] == 11){
-        [self processPacket];        
-        // NSLog(@"Read data (%u): %@", [readData length],
-        //   [NSString stringForData:(const uint8_t*)[readData bytes] withSize:[readData length]] );
-    }  
+    [self processPacket];
+    // NSLog(@"Read data (%u): %@", [readData length],
+    //   [NSString stringForData:(const uint8_t*)[readData bytes] withSize:[readData length]] )
 
     // reset buffer - assumption: controller packet arrives in a single RFCOMM packet
     [readData setLength:0];
