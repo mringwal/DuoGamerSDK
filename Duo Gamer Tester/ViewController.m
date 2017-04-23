@@ -10,7 +10,10 @@
 #import "DuoGamerSDK.h"
 
 #ifdef DEBUG
-#define DLog(fmt, ...)  { self.textView.text = [self.textView.text stringByAppendingString:[NSString stringWithFormat:fmt @"\n", ##__VA_ARGS__]]; }
+#define DLog(fmt, ...)                                                                                                                                         \
+    {                                                                                                                                                          \
+        self.textView.text = [self.textView.text stringByAppendingString:[NSString stringWithFormat:fmt @"\n", ##__VA_ARGS__]];                                \
+    }
 #else
 #define DLog NSLog
 #endif
@@ -23,7 +26,8 @@
 
 @implementation ViewController
 
-- (void)viewDidLoad {
+- (void)viewDidLoad
+{
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     DuoGamer *duoGamer = [[DuoGamer alloc] init];
@@ -44,19 +48,21 @@
 
 #pragma mark - DuoGamerDelegate
 
-- (void)connected {
+- (void)connected
+{
     DLog(@"DuoGamerTest: connected");
 }
 
-- (void)disconnected {
+- (void)disconnected
+{
     DLog(@"DuoGamerTest: disconnected");
 }
 
-- (void)handleState:(DuoGamerState *)state {
-    DLog(@"DuoGamerTest: DPad L%u R%u U%u D%u, Buttons A%u B%u X%u Y%u, AnalogLeft %d/%d AnalogRight %d/%d",
-          state->dpadLeft, state->dpadRight, state->dpadUp, state->dpadDown,
-          state->buttonA, state->buttonB, state->buttonX, state->buttonY,
-          state->analogLeftX, state->analogLeftY, state->analogRightX, state->analogRightY);
+- (void)handleState:(DuoGamerState *)state
+{
+    DLog(@"DuoGamerTest: DPad L%u R%u U%u D%u, Buttons A%u B%u X%u Y%u, AnalogLeft %d/%d AnalogRight %d/%d", state->dpadLeft, state->dpadRight, state->dpadUp,
+         state->dpadDown, state->buttonA, state->buttonB, state->buttonX, state->buttonY, state->analogLeftX, state->analogLeftY, state->analogRightX,
+         state->analogRightY);
 }
 
 @end
