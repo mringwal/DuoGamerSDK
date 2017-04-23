@@ -139,6 +139,11 @@ static inline BOOL isBitSet(int data, int bit){
     [[session inputStream] close];
     [[session inputStream] removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
     [[session inputStream] setDelegate:nil];
+    
+    [[session outputStream] close];
+    [[session outputStream] removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    [[session outputStream] setDelegate:nil];
+
 
     [session release];
     session = nil;
@@ -164,11 +169,12 @@ static inline BOOL isBitSet(int data, int bit){
 
 -(void)processPacket
 {
+    uint8_t * data = malloc(sizeof(uint8_t));
+    
+    // moving analog joystick may send more packets than usual
     while ([readData length] >= SINGLE_PACKET_SIZE) {
         // valid fixed data, but ignore xor checksum
-        uint8_t * data = malloc(sizeof(uint8_t));
         [readData getBytes:(void *)data range:NSMakeRange(0, SINGLE_PACKET_SIZE)];
-//        uint8_t * data = (uint8_t*) [readData bytes];
         if (data[0] != 0x5a) return;
         if (data[1] != 0xa5) return;
         if (data[2] != 0x04) return;
@@ -197,9 +203,10 @@ static inline BOOL isBitSet(int data, int bit){
         if (![delegate respondsToSelector:@selector(handleState:)]) return;
         [delegate handleState:&state];
         
-        free(data);
         [readData replaceBytesInRange:NSMakeRange(0, SINGLE_PACKET_SIZE) withBytes:NULL length:0];
     }
+    
+    free(data);
 }
 
 // asynchronous NSStream handleEvent method
