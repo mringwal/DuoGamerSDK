@@ -184,8 +184,8 @@ static inline BOOL isBitSet(int data, int bit){
         uint8_t buttons_2      = data[4];
         state.buttonA          = isBitSet(buttons_1, 0);
         state.buttonB          = isBitSet(buttons_1, 1);
-        state.buttonY          = isBitSet(buttons_1, 2);
-        state.buttonX          = isBitSet(buttons_1, 3);
+        state.buttonX          = isBitSet(buttons_1, 2);
+        state.buttonY          = isBitSet(buttons_1, 3);
         state.analogLeftClick  = isBitSet(buttons_1, 5);
         state.analogRightClick = isBitSet(buttons_1, 6);
         state.shoulderRight    = isBitSet(buttons_2,  0);
